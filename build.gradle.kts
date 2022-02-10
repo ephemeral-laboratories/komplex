@@ -3,7 +3,7 @@ plugins {
 }
 
 group = "garden.ephemeral.math"
-version = "1.0-SNAPSHOT"
+version = libs.versions.komplex.get()
 
 repositories {
     mavenCentral()
@@ -41,10 +41,8 @@ kotlin {
         val commonMain by getting
         val commonTest by getting {
             dependencies {
-                val assertkVersion: String by project.extra
-
                 implementation(kotlin("test"))
-                implementation("com.willowtreeapps.assertk:assertk:$assertkVersion")
+                implementation(libs.assertk)
             }
         }
         val jvmMain by getting
