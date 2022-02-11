@@ -1,5 +1,5 @@
 [versions]
-"komplex" = "1.0.0"
+"komplex" = "1.0.1-SNAPSHOT"
 "kotlin" = "1.6.10"
 "assertk" = "0.25"
 
