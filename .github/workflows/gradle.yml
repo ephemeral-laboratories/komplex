@@ -1,4 +1,4 @@
-name: Java CI with Gradle
+name: CI with Gradle
 
 on:
   push:
@@ -8,22 +8,45 @@ on:
 
 jobs:
   build:
-
-    runs-on: ubuntu-latest
+    name: Build on ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os:
+          - ubuntu-latest
+          - macos-latest
+          # TODO: No assertk on mingwX64 yet: https://github.com/willowtreeapps/assertk/issues/406
+          # - windows-latest
+        include:
+          - os: ubuntu-latest
+            test_targets: linuxX64Test
+          - os: macos-latest
+            test_targets: macosX64Test macosArm64Test iosX64Test iosSimulatorArm64Test tvosX64Test tvosSimulatorArm64Test watchosX86Test watchosX64Test watchosSimulatorArm64Test
+          # TODO: No assertk on mingwX64 yet: https://github.com/willowtreeapps/assertk/issues/406
+          # - os: windows-latest
+          #   test_targets: mingwX64Test
 
     steps:
-    - uses: actions/checkout@v2
+    - name: Checkout
+      uses: actions/checkout@v2
 
-    - name: Set up JDK 11
+    - name: Configure JDK
       uses: actions/setup-java@v2
       with:
         java-version: '11'
         distribution: 'temurin'
 
-    - name: Gradle Wrapper Validation
+    - name: Cache Konan
+      uses: actions/cache@v2
+      with:
+        path: ~/.konan
+        key: ${{ runner.os }}-konan-${{ hashFiles('**/*.gradle*') }}-${{ hashFiles('**/gradle/wrapper/gradle-wrapper.properties') }}
+        restore-keys: ${{ runner.os }}-konan-
+
+    - name: Validate wrapper
       uses: gradle/wrapper-validation-action@v1.0.4
 
-    - name: Build with Gradle
+    - name: Build
       uses: gradle/gradle-build-action@v2.1.3
       with:
         arguments: build
@@ -31,4 +54,4 @@ jobs:
     - name: Run native tests
       uses: gradle/gradle-build-action@v2.1.3
       with:
-        arguments: linuxX64Test
+        arguments: ${{ matrix.test_targets }}
