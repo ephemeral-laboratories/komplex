@@ -9,6 +9,16 @@ repositories {
     mavenCentral()
 }
 
+val nativeTargets = arrayOf(
+    "linuxX64",
+    "macosX64", "macosArm64",
+    "iosArm32", "iosArm64", "iosX64", "iosSimulatorArm64",
+    "tvosArm64", "tvosX64", "tvosSimulatorArm64",
+    "watchosArm32", "watchosArm64", "watchosX86", "watchosX64", "watchosSimulatorArm64",
+    // TODO: No assertk on mingwX64 yet: https://github.com/willowtreeapps/assertk/issues/406
+    // "mingwX64",
+)
+
 kotlin {
     jvm {
         compilations.all {
@@ -19,6 +29,7 @@ kotlin {
             useJUnitPlatform()
         }
     }
+
     js(BOTH) {
         browser {
             commonWebpackConfig {
@@ -26,17 +37,11 @@ kotlin {
             }
         }
     }
-    // TODO: Can't resolve assertk for native
-//    val hostOs = System.getProperty("os.name")
-//    val isMingwX64 = hostOs.startsWith("Windows")
-//    val nativeTarget = when {
-//        hostOs == "Mac OS X" -> macosX64("native")
-//        hostOs == "Linux" -> linuxX64("native")
-//        isMingwX64 -> mingwX64("native")
-//        else -> throw GradleException("Host OS is not supported in Kotlin/Native.")
-//    }
 
-    
+    for (target in nativeTargets) {
+        targets.add(presets.getByName(target).createTarget(target))
+    }
+
     sourceSets {
         val commonMain by getting
         val commonTest by getting {
@@ -49,7 +54,21 @@ kotlin {
         val jvmTest by getting
         val jsMain by getting
         val jsTest by getting
-//        val nativeMain by getting
-//        val nativeTest by getting
+
+        val nativeMain by creating {
+            dependsOn(commonMain)
+        }
+        val nativeTest by creating {
+            dependsOn(commonTest)
+        }
+
+        for (sourceSet in nativeTargets) {
+            getByName("${sourceSet}Main") {
+                dependsOn(nativeMain)
+            }
+            getByName("${sourceSet}Test") {
+                dependsOn(nativeTest)
+            }
+        }
     }
 }
