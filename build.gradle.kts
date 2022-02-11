@@ -99,46 +99,42 @@ tasks {
 }
 
 publishing {
-    // TODO: I disabled this because I discovered that Kotlin/Multiplatform is already
-    //       setting up publishing tasks, but I keep it around in case I need to scuttle
-    //       anything from it to make the actual 1.0 release work, because I remember
-    //       Sonatype's repository being really strict about its checks.
-//    val release by publications.creating(MavenPublication::class) {
-//        from(components["java"])
+    publications.withType<MavenPublication>().configureEach {
+        // TODO: Figure out how much we need to pass all Sonatype's checks
 //        artifact(tasks.named("sourcesJar"))
-//        artifact(tasks.named("javadocJar"))
-//
-//        pom {
-//            val projectGitUrl = "https://github.com/ephemeral-laboratories/komplex"
-//            name.set(project.name)
-//            description.set(project.description)
-//            url.set(projectGitUrl)
-//            inceptionYear.set("2022")
-//            licenses {
-//                license {
-//                    name.set("MIT")
-//                    url.set("$projectGitUrl/blob/main/COPYING.txt")
-//                }
-//            }
-//            developers {
-//                developer {
-//                    id.set("hakanai")
-//                    name.set("Hakanai")
-//                    email.set("hakanai@ephemeral.garden")
-//                    url.set("https://linktr.ee/hakanai")
-//                }
-//            }
-//            issueManagement {
-//                system.set("GitHub")
-//                url.set("$projectGitUrl/issues")
-//            }
-//            scm {
-//                url.set(projectGitUrl)
-//                connection.set("scm:git:$projectGitUrl")
-//                developerConnection.set("scm:git:$projectGitUrl")
-//            }
-//        }
-//    }
+        artifact(tasks.named("javadocJar"))
+
+        pom {
+            val projectGitUrl = "https://github.com/ephemeral-laboratories/komplex"
+            name.set(project.name)
+            description.set(project.description)
+            url.set(projectGitUrl)
+            inceptionYear.set("2022")
+            licenses {
+                license {
+                    name.set("MIT")
+                    url.set("$projectGitUrl/blob/main/COPYING.txt")
+                }
+            }
+            developers {
+                developer {
+                    id.set("hakanai")
+                    name.set("Hakanai")
+                    email.set("hakanai@ephemeral.garden")
+                    url.set("https://linktr.ee/hakanai")
+                }
+            }
+            issueManagement {
+                system.set("GitHub")
+                url.set("$projectGitUrl/issues")
+            }
+            scm {
+                url.set(projectGitUrl)
+                connection.set("scm:git:$projectGitUrl")
+                developerConnection.set("scm:git:$projectGitUrl")
+            }
+        }
+    }
 
     signing.sign(publications)
 
