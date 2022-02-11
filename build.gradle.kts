@@ -1,9 +1,15 @@
+import org.jetbrains.dokka.gradle.DokkaTask
+
 plugins {
     kotlin("multiplatform") version "1.6.10"
+    id("org.jetbrains.dokka") version "1.6.10"
+    `maven-publish`
+    signing
 }
 
 group = "garden.ephemeral.math"
 version = libs.versions.komplex.get()
+description = "Kotlin multiplatform complex math library"
 
 repositories {
     mavenCentral()
@@ -68,6 +74,87 @@ kotlin {
             }
             getByName("${sourceSet}Test") {
                 dependsOn(nativeTest)
+            }
+        }
+    }
+}
+
+val isReleaseVersion by project.extra {
+    // Relies on a command-line-provided system property, to mitigate the risk of
+    // accidentally treating arbitrary main branch commits as a release
+    // XXX: Could pass the actual tag and check that it and the version match?
+    val isRealRelease = project.findProperty("realRelease") == "true"
+    val isSnapshotVersion = project.version.toString().endsWith("-SNAPSHOT")
+    isRealRelease && !isSnapshotVersion
+}
+
+tasks {
+    val dokkaHtml by getting(DokkaTask::class)
+
+    val javadocJar by registering(Jar::class) {
+        dependsOn(dokkaHtml)
+        archiveClassifier.set("javadoc")
+        from(dokkaHtml.outputDirectory)
+    }
+}
+
+publishing {
+    // TODO: I disabled this because I discovered that Kotlin/Multiplatform is already
+    //       setting up publishing tasks, but I keep it around in case I need to scuttle
+    //       anything from it to make the actual 1.0 release work, because I remember
+    //       Sonatype's repository being really strict about its checks.
+//    val release by publications.creating(MavenPublication::class) {
+//        from(components["java"])
+//        artifact(tasks.named("sourcesJar"))
+//        artifact(tasks.named("javadocJar"))
+//
+//        pom {
+//            val projectGitUrl = "https://github.com/ephemeral-laboratories/komplex"
+//            name.set(project.name)
+//            description.set(project.description)
+//            url.set(projectGitUrl)
+//            inceptionYear.set("2022")
+//            licenses {
+//                license {
+//                    name.set("MIT")
+//                    url.set("$projectGitUrl/blob/main/COPYING.txt")
+//                }
+//            }
+//            developers {
+//                developer {
+//                    id.set("hakanai")
+//                    name.set("Hakanai")
+//                    email.set("hakanai@ephemeral.garden")
+//                    url.set("https://linktr.ee/hakanai")
+//                }
+//            }
+//            issueManagement {
+//                system.set("GitHub")
+//                url.set("$projectGitUrl/issues")
+//            }
+//            scm {
+//                url.set(projectGitUrl)
+//                connection.set("scm:git:$projectGitUrl")
+//                developerConnection.set("scm:git:$projectGitUrl")
+//            }
+//        }
+//    }
+
+    signing.sign(publications)
+
+    repositories.maven {
+        url = if (isReleaseVersion) {
+            uri("https://s01.oss.sonatype.org/service/local/staging/deploy/maven2")
+        } else {
+            uri("https://s01.oss.sonatype.org/content/repositories/snapshots")
+        }
+
+        val ossrhUsername = findProperty("ossrhUsername") as? String ?: System.getenv("OSSRH_USERNAME")
+        val ossrhPassword = findProperty("ossrhPassword") as? String ?: System.getenv("OSSRH_PASSWORD")
+        if (ossrhUsername != null && ossrhPassword != null) {
+            credentials {
+                username = ossrhUsername
+                password = ossrhPassword
             }
         }
     }

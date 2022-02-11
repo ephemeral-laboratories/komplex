@@ -1,0 +1,18 @@
+runs:
+  using: composite
+  steps:
+    - name: Configure JDK
+      uses: actions/setup-java@v2
+      with:
+        java-version: '11'
+        distribution: 'temurin'
+
+    - name: Cache Konan
+      uses: actions/cache@v2
+      with:
+        path: ~/.konan
+        key: ${{ runner.os }}-konan-${{ hashFiles('**/*.gradle*') }}-${{ hashFiles('**/gradle/wrapper/gradle-wrapper.properties') }}
+        restore-keys: ${{ runner.os }}-konan-
+
+    - name: Validate wrapper
+      uses: gradle/wrapper-validation-action@v1.0.4
